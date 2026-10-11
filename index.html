@@ -1,13 +1,393 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0D0D0D" />
-    <title>Sabi</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sabi — The quiet side of the internet</title>
+<meta name="description" content="Sabi is a quiet social app: a chronological feed, circles instead of followers, and a private journal. No algorithm, no reels, no numbers.">
+<meta name="theme-color" content="#ece6dc">
+
+<!-- Link preview (WhatsApp, Telegram, X, iMessage...). Scrapers need ABSOLUTE urls:
+     if this page lives somewhere other than sabi-deeplink.vercel.app, change the two urls below. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sabi">
+<meta property="og:title" content="Sabi — The quiet side of the internet">
+<meta property="og:description" content="No algorithm. No reels. No numbers telling you how you did. A chronological feed, circles instead of followers, and a private journal.">
+<meta property="og:url" content="https://sabi-deeplink.vercel.app/">
+<meta property="og:image" content="https://sabi-deeplink.vercel.app/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A glowing ember globe beside the words The quiet side of the internet">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sabi — The quiet side of the internet">
+<meta name="twitter:description" content="No algorithm. No reels. No numbers telling you how you did.">
+<meta name="twitter:image" content="https://sabi-deeplink.vercel.app/og-image.jpg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html[data-theme="day"] {
+    --bg:#ece6dc; --ink:#1c1713; --body:#3a332c; --muted:#6a6157; --accent:#b4492a; --dot:#c2552b;
+    --ring:rgba(180,73,42,.6); --card:#f8f3ea; --line:rgba(28,23,19,.22); --shadow:rgba(28,23,19,.30); --glow:#f6f1e8;
+    --btn:#b4492a; --btn-ink:#fff7ef;
+  }
+  html[data-theme="night"] {
+    --bg:#0e0d0c; --ink:#f1ebe1; --body:#cfc6bb; --muted:#a39a90; --accent:#e08a5c; --dot:#d9693a;
+    --ring:rgba(224,138,92,.65); --card:#1a1613; --line:rgba(241,235,225,.26); --shadow:rgba(0,0,0,.7); --glow:#2b1912;
+    --btn:#e08a5c; --btn-ink:#1a0e08;
+  }
+  html { background: var(--bg); -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+    transition: background-color .6s ease, color .6s ease;
+  }
+  body, header, h1, h2, p, em, button, a, .feature, .abs { transition: color .6s ease, background-color .6s ease, border-color .6s ease; }
+  .serif { font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; }
+  .wrap { max-width: 620px; margin: 0 auto; padding: calc(16px + env(safe-area-inset-top)) 24px calc(56px + env(safe-area-inset-bottom)); }
+
+  /* ---------- header ---------- */
+  header { display: flex; align-items: center; justify-content: space-between; min-height: 48px; }
+  .wordmark { display: flex; align-items: baseline; gap: 3px; font-size: 22px; letter-spacing: .38em; text-transform: lowercase; }
+  .wordmark i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--dot); margin-left: 2px; }
+  #themeBtn {
+    min-height: 44px; padding: 0 18px; display: flex; align-items: center; gap: 10px;
+    background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 22px; cursor: pointer;
+    font: 400 13px 'Hanken Grotesk', Arial, sans-serif; letter-spacing: .18em; text-transform: uppercase;
+  }
+  #themeBtn:hover { border-color: currentColor; }
+  #themeBtn:focus-visible, .cta:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+  #themeBtn b { display: inline-block; width: 11px; height: 11px; border-radius: 50%; background: var(--ink); }
+
+  /* ---------- hero art: a fixed 560x620 drawing, scaled uniformly (it holds almost no text) ---------- */
+  #heroBox { position: relative; margin: 4px auto 0; width: 560px; height: 620px; }
+  #hero { position: absolute; left: 0; top: 0; width: 560px; height: 620px; transform-origin: 0 0; }
+  .abs { position: absolute; }
+  .star { position: absolute; border-radius: 50%; background: var(--muted); }
+  .label { font-size: 18px; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); }
+
+  @keyframes float   { 0%,100% { transform: translateY(0) }   50% { transform: translateY(-12px) } }
+  @keyframes drift-a { 0%,100% { transform: translateY(0) }   50% { transform: translateY(-8px) } }
+  @keyframes drift-b { 0%,100% { transform: translateY(0) }   50% { transform: translateY(7px) } }
+  @keyframes shadow  { 0%,100% { transform: scale(1); opacity: 1 } 50% { transform: scale(.9); opacity: .75 } }
+  @keyframes orbit   { from { offset-distance: 0% } to { offset-distance: 100% } }
+  @keyframes breathe { 0%,100% { opacity: .5 } 50% { opacity: 1 } }
+  .float   { animation: float 7s ease-in-out infinite; }
+  .drift-a { animation: drift-a 9s ease-in-out infinite; }
+  .drift-b { animation: drift-b 11s ease-in-out infinite; }
+  .shadow  { animation: shadow 7s ease-in-out infinite; }
+  .breathe { animation: breathe 5s ease-in-out infinite; }
+  .orbit-dot { offset-path: path('M 0,75 a 260,75 0 1,0 520,0 a 260,75 0 1,0 -520,0'); offset-rotate: 0deg; animation: orbit 18s linear infinite; }
+  @media (prefers-reduced-motion: reduce) { .float,.drift-a,.drift-b,.shadow,.breathe,.orbit-dot { animation: none; } }
+
+  #globe {
+    position: absolute; left: 0; top: 0; width: 400px; height: 400px; border-radius: 50%;
+    overflow: hidden; background: #d4663a; touch-action: none; user-select: none; -webkit-user-select: none;
+    cursor: grab; box-shadow: 0 46px 70px -24px rgba(120,48,20,.45);
+  }
+  #globe.dragging { cursor: grabbing; }
+  #globeLines { position: absolute; left: 0; top: 0; pointer-events: none; }
+  #globeShade {
+    position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+    background:
+      radial-gradient(circle at 33% 27%, rgba(255,214,180,.75) 0%, rgba(255,214,180,0) 38%),
+      radial-gradient(circle at 50% 50%, rgba(58,20,9,0) 52%, rgba(58,20,9,.55) 82%, rgba(30,10,4,.85) 100%),
+      radial-gradient(circle at 70% 78%, rgba(40,12,4,.40), rgba(40,12,4,0) 60%);
+  }
+  #globeLink { position: absolute; left: 200px; top: 200px; width: 0; height: 0; display: block; text-decoration: none; outline: none; }
+  #globeLink .ltr {
+    position: absolute; left: 0; top: 0; white-space: pre; font-size: 25px; font-weight: 500; line-height: 1;
+    padding: 12px 3px; color: #fff6ea; text-shadow: 0 1px 8px rgba(60,20,8,.55); cursor: pointer; transition: none;
+  }
+  #globeLink:hover .ltr, #globeLink:focus-visible .ltr { filter: brightness(1.3); text-decoration: underline; }
+  .lift { transition: transform .5s ease; }
+  .lift:hover { transform: translateY(-6px); }
+
+  /* ---------- real-size content: reflows at any width ---------- */
+  .eyebrow { margin: 8px 0 0; text-align: center; font-size: 14px; letter-spacing: .24em; text-transform: uppercase; color: var(--muted); }
+  h1 { margin: 16px 0 0; text-align: center; font-weight: 300; font-size: clamp(46px, 13vw, 76px); line-height: 1.02; letter-spacing: -.01em; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .rule { width: 56px; height: 1px; background: var(--accent); margin: 28px auto; }
+  .lead { margin: 0; text-align: center; font-size: 20px; font-weight: 300; line-height: 1.6; color: var(--body); }
+  .quote { margin: 20px auto 0; max-width: 28ch; text-align: center; font-style: italic; font-weight: 400; font-size: 24px; line-height: 1.4; color: var(--muted); }
+
+  .cta-wrap { margin-top: 32px; text-align: center; }
+  .cta {
+    display: flex; align-items: center; justify-content: center; width: min(100%, 340px); min-height: 58px; margin: 0 auto;
+    border-radius: 29px; background: var(--btn); color: var(--btn-ink); text-decoration: none;
+    font-size: 17px; font-weight: 500; letter-spacing: .04em;
+  }
+  .cta:hover { filter: brightness(1.08); }
+  .cta:active { transform: translateY(1px); }
+  .addr { margin: 14px 0 0; font-size: 16px; letter-spacing: .06em; color: var(--muted); }
+
+  .features { margin-top: 52px; border-top: 1px solid var(--line); }
+  .feature { display: flex; gap: 18px; align-items: flex-start; padding: 22px 0; border-bottom: 1px solid var(--line); }
+  .ico { position: relative; flex: none; width: 44px; height: 32px; margin-top: 4px; }
+  .feature h2 { margin: 0 0 6px; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 26px; line-height: 1.15; }
+  .feature p { margin: 0; font-size: 17px; font-weight: 300; line-height: 1.5; color: var(--body); }
+</style>
+</head>
+<body>
+<script>
+  /* set the theme before first paint: follow the phone's light/dark setting */
+  document.documentElement.setAttribute('data-theme',
+    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day');
+</script>
+
+<div class="wrap">
+  <header>
+    <div class="wordmark">sabi<i class="breathe" aria-hidden="true"></i></div>
+    <button id="themeBtn" type="button" aria-pressed="false"><b aria-hidden="true"></b><span id="themeLabel">Night</span></button>
+  </header>
+
+  <div id="heroBox">
+    <div id="hero">
+      <div class="abs" style="left:0;top:0;width:560px;height:620px;background:radial-gradient(ellipse 270px 290px at 280px 300px, var(--glow), rgba(0,0,0,0) 100%)"></div>
+
+      <div class="star" aria-hidden="true" style="left:60px;top:150px;width:5px;height:5px;opacity:.6"></div>
+      <div class="star" aria-hidden="true" style="left:110px;top:84px;width:4px;height:4px;opacity:.5"></div>
+      <div class="star" aria-hidden="true" style="left:34px;top:250px;width:5px;height:5px;opacity:.45"></div>
+      <div class="star" aria-hidden="true" style="left:210px;top:58px;width:4px;height:4px;opacity:.5"></div>
+
+      <div class="abs" aria-hidden="true" style="left:20px;top:228px;width:520px;height:150px;transform:rotate(-8deg)">
+        <div class="abs" style="left:0;top:0;width:520px;height:150px;border-radius:50%;border:1px solid var(--line)"></div>
+        <div class="abs orbit-dot" style="left:0;top:0;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--dot)"></div>
+      </div>
+
+      <div class="abs shadow" aria-hidden="true" style="left:110px;top:516px;width:340px;height:44px;border-radius:50%;background:radial-gradient(ellipse at center, var(--shadow), rgba(0,0,0,0) 70%)"></div>
+
+      <div class="abs float" style="left:80px;top:96px;width:400px;height:400px">
+        <div id="globe">
+          <svg id="globeLines" aria-hidden="true" viewBox="0 0 400 400" width="400" height="400">
+            <path id="parallels" fill="none" stroke="rgba(255,226,200,.18)" stroke-width="1.5"></path>
+            <path id="meridians" fill="none" stroke="rgba(255,226,200,.30)" stroke-width="1.5"></path>
+          </svg>
+          <div id="globeShade" aria-hidden="true"></div>
+          <a id="globeLink" href="https://sabi-deeplink.vercel.app" target="_blank" rel="noopener" aria-label="Open sabi-deeplink.vercel.app"></a>
+        </div>
+      </div>
+
+      <!-- a circle of people -->
+      <div class="abs drift-a" aria-hidden="true" style="left:436px;top:26px;width:120px;height:130px">
+        <div class="abs" style="left:0;top:10px;width:70px;height:70px;border-radius:50%;border:1.5px solid var(--ring)"></div>
+        <div class="abs" style="left:44px;top:10px;width:70px;height:70px;border-radius:50%;border:1.5px solid var(--ring)"></div>
+        <div class="abs" style="left:22px;top:48px;width:70px;height:70px;border-radius:50%;border:1.5px solid var(--ring)"></div>
+        <div class="abs" style="left:31px;top:42px;width:7px;height:7px;border-radius:50%;background:var(--dot)"></div>
+        <div class="abs" style="left:75px;top:42px;width:7px;height:7px;border-radius:50%;background:var(--dot);opacity:.7"></div>
+        <div class="abs" style="left:53px;top:80px;width:7px;height:7px;border-radius:50%;background:var(--dot);opacity:.5"></div>
+      </div>
+
+      <!-- the feed, oldest to newest -->
+      <div class="abs drift-b" aria-hidden="true" style="left:476px;top:330px;width:70px;height:200px">
+        <div class="abs" style="right:5px;top:0;width:1px;height:200px;background:var(--line)"></div>
+        <div class="abs" style="right:12px;top:34px;width:34px;height:1px;background:var(--line)"></div>
+        <div class="abs" style="right:12px;top:99px;width:50px;height:1px;background:var(--line)"></div>
+        <div class="abs" style="right:12px;top:164px;width:34px;height:1px;background:var(--dot);opacity:.7"></div>
+        <div class="abs" style="right:0;top:30px;width:10px;height:10px;border-radius:50%;background:var(--muted);opacity:.7"></div>
+        <div class="abs" style="right:0;top:95px;width:10px;height:10px;border-radius:50%;background:var(--muted);opacity:.7"></div>
+        <div class="abs" style="right:0;top:160px;width:10px;height:10px;border-radius:50%;background:var(--dot)"></div>
+      </div>
+
+      <!-- a private journal page -->
+      <div class="abs drift-a" aria-hidden="true" style="left:0;top:410px;width:232px;height:186px">
+        <div class="lift abs" style="left:0;top:0;width:232px;height:186px;padding:20px 22px;rotate:-4deg;background:var(--card);border:1px solid var(--line);border-radius:5px;box-shadow:0 18px 30px -14px var(--shadow)">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:15px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)">Just for you</div>
+            <div style="position:relative;width:16px;height:19px">
+              <div class="abs" style="left:3px;top:0;width:10px;height:10px;border:1.5px solid var(--muted);border-bottom:none;border-radius:5px 5px 0 0"></div>
+              <div class="abs" style="left:0;top:8px;width:16px;height:11px;border-radius:2px;background:var(--muted)"></div>
+            </div>
+          </div>
+          <div class="serif" style="margin-top:16px;font-style:italic;font-weight:400;font-size:25px;line-height:1.45;color:var(--ink);background:repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 35px, var(--line) 35px 36px)">Slow morning.<br>Rain on the roof.<br>Nothing to prove.</div>
+        </div>
+      </div>
+
+      <div id="hint" class="abs label breathe" aria-hidden="true" style="left:0;right:0;top:24px;text-align:center">Drag in any direction</div>
+    </div>
+  </div>
+
+  <p class="eyebrow">Tired of the endless feed?</p>
+  <h1 class="serif">The <em>quiet</em> side of the internet</h1>
+  <div class="rule"></div>
+  <p class="lead">No algorithm. No reels.<br>No numbers telling you how you did.</p>
+  <p class="quote serif">A journal nobody can read — not your followers, not us.</p>
+
+  <div class="cta-wrap">
+    <a class="cta" href="https://sabi-deeplink.vercel.app" target="_blank" rel="noopener">Open Sabi</a>
+    <p class="addr">sabi-deeplink.vercel.app</p>
+  </div>
+
+  <section class="features" aria-label="What Sabi is">
+    <div class="feature">
+      <div class="ico" aria-hidden="true">
+        <div class="abs" style="left:0;top:0;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--accent)"></div>
+        <div class="abs" style="left:14px;top:0;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--accent)"></div>
+      </div>
+      <div><h2>Circles, not followers</h2><p>Share with the few people you choose.</p></div>
+    </div>
+    <div class="feature">
+      <div class="ico" aria-hidden="true">
+        <div class="abs" style="left:13px;top:2px;width:1.5px;height:28px;background:var(--accent)"></div>
+        <div class="abs" style="left:9px;top:0;width:9px;height:9px;border-radius:50%;background:var(--accent)"></div>
+      </div>
+      <div><h2>Newest first</h2><p>A plain, chronological feed. Nothing ranked, nothing pushed.</p></div>
+    </div>
+    <div class="feature">
+      <div class="ico" aria-hidden="true">
+        <div class="abs" style="left:6px;top:0;width:14px;height:14px;border:1.5px solid var(--accent);border-bottom:none;border-radius:7px 7px 0 0"></div>
+        <div class="abs" style="left:2px;top:12px;width:22px;height:16px;border-radius:3px;background:var(--accent)"></div>
+      </div>
+      <div><h2>A journal that stays yours</h2><p>Private pages for what you would never post.</p></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var box = document.getElementById('heroBox'), hero = document.getElementById('hero');
+  var globe = document.getElementById('globe'), link = document.getElementById('globeLink');
+  var hint = document.getElementById('hint');
+  var mer = document.getElementById('meridians'), par = document.getElementById('parallels');
+  var btn = document.getElementById('themeBtn'), label = document.getElementById('themeLabel');
+  var meta = document.querySelector('meta[name="theme-color"]');
+
+  var R = 200, D = Math.PI / 180;
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- scale only the drawing to the screen width; all text below reflows at real size ---------- */
+  var scale = 1;
+  function fit() {
+    var avail = document.documentElement.clientWidth - 48;
+    scale = Math.min(1, avail / 560);
+    box.style.width = (560 * scale) + 'px';
+    box.style.height = (620 * scale) + 'px';
+    hero.style.transform = 'scale(' + scale + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  /* ---------- day / night ---------- */
+  function paintTheme() {
+    var night = root.getAttribute('data-theme') === 'night';
+    btn.setAttribute('aria-pressed', night ? 'true' : 'false');
+    label.textContent = night ? 'Day' : 'Night';
+    if (meta) meta.setAttribute('content', night ? '#0e0d0c' : '#ece6dc');
+  }
+  btn.addEventListener('click', function () {
+    root.setAttribute('data-theme', root.getAttribute('data-theme') === 'night' ? 'day' : 'night');
+    paintTheme();
+  });
+  paintTheme();
+
+  /* ---------- the address, written letter by letter around the globe ---------- */
+  var text = 'sabi-deeplink.vercel.app', FS = 25, lat0 = -0.1;
+  function adv(c) {
+    var w = 'il.-'.indexOf(c) >= 0 ? 0.28 : 'rtf'.indexOf(c) >= 0 ? 0.38 : 'wm'.indexOf(c) >= 0 ? 0.8 : 0.56;
+    return (w + 0.08) * FS;
+  }
+  var widths = text.split('').map(adv);
+  var total = widths.reduce(function (a, b) { return a + b; }, 0);
+  var acc = 0, glyphs = [];
+  text.split('').forEach(function (ch, i) {
+    var center = acc + widths[i] / 2; acc += widths[i];
+    var span = document.createElement('span');
+    span.className = 'ltr'; span.setAttribute('aria-hidden', 'true'); span.textContent = ch;
+    link.appendChild(span);
+    glyphs.push({ el: span, lon: (center - total / 2) / (R * Math.cos(lat0)) });
+  });
+
+  /* ---------- rotation ---------- */
+  var yaw = 0, pitch = 0, vy = reduced ? 0 : 0.004, vp = 0;
+  var pressing = false, dragging = false, didDrag = false;
+  var sx = 0, sy = 0, lx = 0, ly = 0, pid = 0;
+  var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+
+  function rot(x, y, z) {
+    var cy = Math.cos(yaw), sy_ = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+    var x1 = x * cy + z * sy_, z1 = -x * sy_ + z * cy;
+    return [x1, y * cp - z1 * sp, y * sp + z1 * cp];
+  }
+  function line(pts) {
+    var d = '', prev = false;
+    for (var i = 0; i < pts.length; i++) {
+      var q = rot(pts[i][0], pts[i][1], pts[i][2]), vis = q[2] > 0;
+      if (vis) d += (prev ? 'L' : 'M') + (R + R * q[0]).toFixed(1) + ',' + (R - R * q[1]).toFixed(1);
+      prev = vis;
+    }
+    return d;
+  }
+  function sph(la, lo) {
+    return [Math.cos(la * D) * Math.sin(lo * D), Math.sin(la * D), Math.cos(la * D) * Math.cos(lo * D)];
+  }
+  function draw() {
+    var m = '', p = '', la, lo, pts;
+    for (lo = 0; lo < 360; lo += 30) { pts = []; for (la = -90; la <= 90; la += 6) pts.push(sph(la, lo)); m += line(pts); }
+    for (la = -60; la <= 60; la += 20) { pts = []; for (lo = 0; lo <= 360; lo += 6) pts.push(sph(la, lo)); p += line(pts); }
+    mer.setAttribute('d', m); par.setAttribute('d', p);
+
+    var sa = Math.sin(lat0), ca = Math.cos(lat0);
+    glyphs.forEach(function (g) {
+      var sl = Math.sin(g.lon), cl = Math.cos(g.lon);
+      var P = rot(ca * sl, sa, ca * cl), E = rot(cl, 0, -sl), N = rot(-sa * sl, ca, -sa * cl);
+      var op = clamp((P[2] - 0.05) / 0.35, 0, 1);
+      g.el.style.opacity = op.toFixed(2);
+      g.el.style.pointerEvents = op > 0.25 ? 'auto' : 'none';
+      g.el.style.transform =
+        'translate(' + (R * P[0]).toFixed(2) + 'px,' + (-R * P[1]).toFixed(2) + 'px) ' +
+        'matrix(' + E[0].toFixed(4) + ',' + (-E[1]).toFixed(4) + ',' + (-N[0]).toFixed(4) + ',' + N[1].toFixed(4) + ',0,0) ' +
+        'translate(-50%,-50%)';
+    });
+  }
+
+  /* ---------- drag in any direction; a plain tap on the address still opens it ---------- */
+  globe.addEventListener('pointerdown', function (e) {
+    pressing = true; didDrag = false; pid = e.pointerId;
+    sx = lx = e.clientX; sy = ly = e.clientY;
+  });
+  globe.addEventListener('pointermove', function (e) {
+    if (!pressing) return;
+    if (!dragging) {
+      if (Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy) < 8) return;
+      dragging = true; didDrag = true;
+      try { globe.setPointerCapture(pid); } catch (err) {}
+      globe.classList.add('dragging');
+      hint.style.display = 'none';
+      lx = e.clientX; ly = e.clientY;
+      return;
+    }
+    var dx = (e.clientX - lx) / scale, dy = (e.clientY - ly) / scale;
+    lx = e.clientX; ly = e.clientY;
+    yaw += dx / R;
+    pitch = clamp(pitch + dy / R, -1.35, 1.35);
+    vy = clamp(dx / R, -0.3, 0.3);
+    vp = clamp(dy / R, -0.3, 0.3);
+  });
+  function end() { pressing = false; if (dragging) { dragging = false; globe.classList.remove('dragging'); } }
+  globe.addEventListener('pointerup', end);
+  globe.addEventListener('pointercancel', end);
+  link.addEventListener('click', function (e) { if (didDrag) e.preventDefault(); });
+
+  /* ---------- idle drift in every direction ---------- */
+  var last = 0;
+  function tick(t) {
+    var dt = last ? Math.min(48, t - last) / 16.7 : 1; last = t;
+    if (!dragging) {
+      var base = reduced ? 0 : 0.003 + 0.0035 * Math.cos(t / 12000);
+      var target = reduced ? 0 : 0.3 * Math.sin(t / 7000);
+      vy += (base - vy) * Math.min(1, 0.03 * dt);
+      vp *= Math.pow(0.95, dt);
+      yaw += vy * dt;
+      pitch = clamp(pitch + vp * dt + (target - pitch) * Math.min(1, 0.006 * dt), -1.35, 1.35);
+    }
+    draw();
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
 </html>
